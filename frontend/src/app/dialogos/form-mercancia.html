@@ -1,0 +1,66 @@
+<dialog #dlg id="dlg-mercancia" aria-labelledby="dlg-mer-titulo">
+  <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="dialogo-cab">
+      <div><h2 id="dlg-mer-titulo">{{ editando() ? 'Editar mercancía' : 'Nueva mercancía' }}</h2><p>Cada mercancía pertenece a una declaración.</p></div>
+      <button type="button" class="btn btn-icono" aria-label="Cerrar" (click)="cerrar()"><svg ico="x"></svg></button>
+    </div>
+    <div class="dialogo-cuerpo">
+      @if (alerta()) { <div class="form-alerta" role="alert">{{ alerta() }}</div> }
+      <div class="form-grid">
+        <div class="campo completo">
+          <label for="f-mer-declaracion">Declaración *</label>
+          <select id="f-mer-declaracion" formControlName="declaracionId" [attr.aria-invalid]="err('declaracionId') ? 'true' : null">
+            <option value="">Elige una declaración…</option>
+            @for (d of opcionesDeclaracion(); track d.id) { <option [value]="d.id">{{ d.numeroDeclaracion }} — {{ d.importadorExportador }}</option> }
+          </select>
+          <span class="error">{{ err('declaracionId') }}</span>
+        </div>
+        <div class="campo completo">
+          <label for="f-mer-descripcion">Descripción *</label>
+          <input id="f-mer-descripcion" formControlName="descripcion" maxlength="150" placeholder="Paltas Hass frescas" autocomplete="off"
+                 [attr.aria-invalid]="err('descripcion') ? 'true' : null">
+          <span class="error">{{ err('descripcion') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-partida">Partida arancelaria *</label>
+          <input id="f-mer-partida" formControlName="partidaArancelaria" class="mono" placeholder="0804.40.00" autocomplete="off"
+                 [attr.aria-invalid]="err('partidaArancelaria') ? 'true' : null">
+          <span class="pista">Formato 0000.00.00 (o con 4º nivel .00)</span>
+          <span class="error">{{ err('partidaArancelaria') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-unidad">Unidad de medida *</label>
+          <input id="f-mer-unidad" formControlName="unidadMedida" list="lista-unidades" maxlength="30" placeholder="unidades" autocomplete="off"
+                 [attr.aria-invalid]="err('unidadMedida') ? 'true' : null">
+          <datalist id="lista-unidades">
+            <option value="unidades"></option><option value="kilogramos"></option><option value="toneladas"></option>
+            <option value="litros"></option><option value="cajas"></option><option value="pares"></option><option value="docenas"></option>
+          </datalist>
+          <span class="error">{{ err('unidadMedida') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-cantidad">Cantidad *</label>
+          <input id="f-mer-cantidad" formControlName="cantidad" type="number" min="0" step="any" inputmode="decimal" placeholder="0"
+                 [attr.aria-invalid]="err('cantidad') ? 'true' : null">
+          <span class="error">{{ err('cantidad') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-valor">Valor (USD) *</label>
+          <input id="f-mer-valor" formControlName="valor" type="number" min="0" step="any" inputmode="decimal" placeholder="0.00"
+                 [attr.aria-invalid]="err('valor') ? 'true' : null">
+          <span class="error">{{ err('valor') }}</span>
+        </div>
+        <div class="campo completo">
+          <label for="f-mer-peso">Peso (kg) <span class="opcional">(opcional)</span></label>
+          <input id="f-mer-peso" formControlName="peso" type="number" min="0" step="any" inputmode="decimal" placeholder="0"
+                 [attr.aria-invalid]="err('peso') ? 'true' : null">
+          <span class="error">{{ err('peso') }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="dialogo-pie">
+      <button type="button" class="btn" (click)="cerrar()">Cancelar</button>
+      <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+</dialog>

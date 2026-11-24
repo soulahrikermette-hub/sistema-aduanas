@@ -1,0 +1,17 @@
+DESPLIEGUE (Render, sin Docker local)
+Variables de entorno a configurar en la plataforma (NO van en el código):
+  SPRING_DATASOURCE_URL       jdbc:postgresql://aws-0-sa-east-1.pooler.supabase.com:5432/postgres
+  SPRING_DATASOURCE_USERNAME  (el usuario de Supabase)
+  SPRING_DATASOURCE_PASSWORD  (la contraseña de Supabase)
+  ADUANAS_JWT_SECRETO         (clave de 32+ caracteres)
+  ADUANAS_AUTH_ADMIN_CLAVE / ADUANAS_AUTH_FUNCIONARIO_CLAVE  (solo si la base está vacía)
+La base ya está en la nube (Supabase), así que solo se despliega la aplicación.
+
+SUBIR A GITHUB (repositorio PRIVADO recomendado):
+  git init
+  git add .
+  git commit -m "Sistema de gestion aduanera"
+  git branch -M main
+  git remote add origin https://github.com/TU_USUARIO/sistema-aduanas.git
+  git push -u origin main
+secretos.properties NO se sube (está en .gitignore): las claves van como variables de entorno en Render.

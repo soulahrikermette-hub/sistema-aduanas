@@ -1,0 +1,111 @@
+<section class="vista">
+  <div class="rejilla-panel">
+    <div class="panel">
+      <div class="panel-cab"><h2>Declaraciones por estado</h2><a class="enlace" routerLink="/declaraciones">Ver todas</a></div>
+      <div class="panel-cuerpo">
+        @if (!datos.cargado()) {
+          <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+        } @else if (datos.errorCarga()) {
+          <div class="vacio error-carga"><svg ico="alerta"></svg><h3>No se pudo cargar la información</h3>
+            <p>Revisa que la aplicación Spring Boot siga en ejecución e inténtalo otra vez.</p>
+            <button type="button" class="btn" (click)="datos.cargarTodo()"><svg ico="refrescar"></svg>Reintentar</button></div>
+        } @else if (datos.estadisticas(); as s) {
+          @if (s.totalDeclaraciones === 0) {
+            <div class="vacio"><svg ico="vacio"></svg><h3>Sin declaraciones todavía</h3><p>Cuando registres declaraciones verás aquí cómo avanzan.</p></div>
+          } @else {
+            <div class="cifra-grande"><strong>{{ s.totalDeclaraciones }}</strong><span>{{ plural(s.totalDeclaraciones, 'declaración', 'declaraciones') }}</span></div>
+            <p class="sub">{{ s.importaciones }} {{ plural(s.importaciones, 'importación', 'importaciones') }} · {{ s.exportaciones }} {{ plural(s.exportaciones, 'exportación', 'exportaciones') }}</p>
+            <div class="barra-estados" role="img" aria-label="Reparto de declaraciones por estado">
+              @for (e of conDatos(); track e) {
+                <span [style.flex]="s.porEstado[e]" [style.--c]="'var(--est-' + e.toLowerCase() + ')'" [attr.title]="nombreEstado[e] + ': ' + s.porEstado[e]"></span>
+              }
+            </div>
+            <ul class="leyenda">
+              @for (e of estados; track e) {
+                <li><button type="button" [style.--c]="'var(--est-' + e.toLowerCase() + ')'" [style.--n]="s.porEstado[e] || 0" (click)="filtrarEstado(e)">
+                  <span class="punto"></span><span class="nombre">{{ nombreEstado[e] }}</span><strong>{{ s.porEstado[e] || 0 }}</strong>
+                </button></li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-cab"><h2>Valor declarado</h2></div>
+      <div class="panel-cuerpo">
+        @if (datos.listo() && datos.estadisticas(); as s) {
+          <div class="valor-grande">{{ s.valorTotal | dinero }}</div>
+          <p class="sub">Suma de todas las mercancías registradas</p>
+          <div class="reparto">
+            <div class="reparto-fila"><div class="etiqueta"><span>Importación</span><strong>{{ s.valorImportacion | dinero }}</strong></div>
+              <div class="reparto-barra"><span [style.width.%]="porcentajes().imp" style="--c:var(--import-fg)"></span></div></div>
+            <div class="reparto-fila"><div class="etiqueta"><span>Exportación</span><strong>{{ s.valorExportacion | dinero }}</strong></div>
+              <div class="reparto-barra"><span [style.width.%]="porcentajes().exp" style="--c:var(--export-fg)"></span></div></div>
+          </div>
+          <div class="mini-cifras">
+            <div><strong>{{ s.totalMercancias }}</strong><span>mercancías</span></div>
+            <div><strong>{{ s.pesoTotal | numero }} kg</strong><span>peso total</span></div>
+            <div><a class="cifra-enlace" routerLink="/incidencias"><strong>{{ s.incidenciasSinResolver || 0 }}</strong><span>incidencias sin resolver</span></a></div>
+          </div>
+        } @else if (!datos.cargado()) {
+          <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="rejilla-panel">
+    <div class="panel">
+      <div class="panel-cab"><h2>Últimas declaraciones</h2><a class="enlace" routerLink="/declaraciones">Ver todas</a></div>
+      <div class="tabla-wrap">
+        @if (!datos.cargado()) {
+          <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+        } @else if (datos.listo()) {
+          @if (recientes().length === 0) {
+            <div class="vacio"><svg ico="vacio"></svg><h3>Nada por mostrar</h3><p>Aquí aparecerán las últimas declaraciones registradas.</p></div>
+          } @else {
+            <table class="tabla" style="min-width:0">
+              <thead><tr><th class="sin-orden">Número</th><th class="sin-orden">Tipo</th><th class="sin-orden">Estado</th><th class="sin-orden num">Valor</th></tr></thead>
+              <tbody>
+                @for (d of recientes(); track d.id) {
+                  <tr>
+                    <td><button type="button" class="enlace-numero" (click)="verDetalle(d.id)">{{ d.numeroDeclaracion }}</button>
+                      <div class="apagado" style="font-size:12.5px">{{ d.fecha | fechaCorta }}</div></td>
+                    <td><span [chip-tipo]="d.tipoOperacion"></span></td>
+                    <td><span [pastilla]="d.estado"></span></td>
+                    <td class="num">@if (d.valor) { {{ d.valor | dinero }} } @else { <span class="apagado">—</span> }</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-cab"><h2>Mercancías de mayor valor</h2><a class="enlace" routerLink="/mercancias">Ver todas</a></div>
+      <div>
+        @if (!datos.cargado()) {
+          <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+        } @else if (datos.listo()) {
+          @if (top().length === 0) {
+            <div class="vacio"><svg ico="vacio"></svg><h3>Nada por mostrar</h3><p>Aquí aparecerán las mercancías de mayor valor.</p></div>
+          } @else {
+            <ul class="lista-top">
+              @for (m of top(); track m.id) {
+                <li>
+                  <div class="fila"><span class="nombre">{{ m.descripcion }}</span><span class="valor">{{ m.valor | dinero }}</span></div>
+                  <div class="de">{{ m.numeroDeclaracion }} · {{ m.cantidad | numero }} {{ m.unidadMedida }}</div>
+                  <div class="proporcion"><span [style.width.%]="m.proporcion"></span></div>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</section>

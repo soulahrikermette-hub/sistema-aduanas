@@ -1,0 +1,69 @@
+<section class="vista">
+  <div class="panel">
+    <div class="herramientas">
+      <div class="buscador">
+        <svg ico="buscar"></svg>
+        <label class="solo-lectores" for="mer-buscar">Buscar mercancías</label>
+        <input #buscador type="search" id="mer-buscar" placeholder="Buscar por descripción o partida" autocomplete="off"
+               [value]="q()" (input)="buscar($any($event.target).value)">
+      </div>
+      <label class="solo-lectores" for="mer-declaracion">Declaración</label>
+      <select id="mer-declaracion" (change)="filtrarDeclaracion($any($event.target).value)">
+        <option value="" [selected]="declaracion() === ''">Todas las declaraciones</option>
+        @for (d of declaracionesOrdenadas(); track d.id) { <option [value]="d.id" [selected]="declaracion() === '' + d.id">{{ d.numeroDeclaracion }}</option> }
+      </select>
+      <span class="espacio"></span>
+      <button type="button" class="btn" (click)="exportar()"><svg ico="descargar"></svg>Exportar CSV</button>
+    </div>
+
+    <div class="tabla-wrap">
+      @if (!datos.cargado()) {
+        <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+      } @else if (datos.errorCarga()) {
+        <div class="vacio error-carga"><svg ico="alerta"></svg><h3>No se pudo cargar la información</h3>
+          <p>Revisa que la aplicación Spring Boot siga en ejecución e inténtalo otra vez.</p>
+          <button type="button" class="btn" (click)="datos.cargarTodo()"><svg ico="refrescar"></svg>Reintentar</button></div>
+      } @else if (datos.mercancias().length === 0) {
+        <div class="vacio"><svg ico="vacio"></svg><h3>Aún no hay mercancías</h3><p>Las mercancías se registran dentro de una declaración.</p>
+          <button type="button" class="btn btn-primario" (click)="ui.mercancia()"><svg ico="plus"></svg>Nueva mercancía</button></div>
+      } @else if (lista().length === 0) {
+        <div class="vacio"><svg ico="vacio"></svg><h3>Sin resultados</h3><p>Ninguna mercancía coincide con la búsqueda o el filtro.</p>
+          <button type="button" class="btn" (click)="limpiar()">Limpiar filtros</button></div>
+      } @else {
+        <table class="tabla">
+          <thead><tr>
+            <th ordenable col="descripcion" titulo="Descripción" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="partidaArancelaria" titulo="Partida" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="numeroDeclaracion" titulo="Declaración" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="num" ordenable col="cantidad" titulo="Cantidad" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="num" ordenable col="valor" titulo="Valor" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="num" ordenable col="peso" titulo="Peso" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="acciones-col sin-orden"><span class="solo-lectores">Acciones</span></th>
+          </tr></thead>
+          <tbody>
+            @for (m of visibles(); track m.id) {
+              <tr>
+                <td class="corto" [attr.title]="m.descripcion">{{ m.descripcion }}</td>
+                <td><span class="mono">{{ m.partidaArancelaria }}</span></td>
+                <td><button type="button" class="enlace-numero" (click)="ui.detalle(m.declaracionId)">{{ m.numeroDeclaracion }}</button></td>
+                <td class="num">{{ m.cantidad | numero }} <span class="apagado">{{ m.unidadMedida }}</span></td>
+                <td class="num">{{ m.valor | dinero }}</td>
+                <td class="num">@if (m.peso) { {{ m.peso | numero }} <span class="apagado">kg</span> } @else { <span class="apagado">—</span> }</td>
+                <td class="acciones-col">
+                  <div class="acciones">
+                    <button type="button" class="btn btn-icono" title="Reportar incidencia" [attr.aria-label]="'Reportar incidencia de ' + m.descripcion" (click)="ui.incidencia(null, m.id)"><svg ico="alerta"></svg></button>
+                    <button type="button" class="btn btn-icono" title="Editar" [attr.aria-label]="'Editar ' + m.descripcion" (click)="ui.mercancia(m)"><svg ico="editar"></svg></button>
+                    @if (sesion.esAdmin()) {
+                      <button type="button" class="btn btn-icono peligro" title="Eliminar" [attr.aria-label]="'Eliminar ' + m.descripcion" (click)="acciones.eliminarMercancia(m)"><svg ico="borrar"></svg></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+    <div pie [total]="lista().length" [pagina]="paginaReal()" (cambiar)="pagina.set($event)"></div>
+  </div>
+</section>

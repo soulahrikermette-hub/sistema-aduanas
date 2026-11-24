@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Gestión Aduanera</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='17' fill='%230e1428'/%3E%3Ccircle cx='18' cy='18' r='13' fill='none' stroke='%237fb6dd' stroke-width='1.5'/%3E%3Cpath d='M18 7l2 9 9 2-9 2-2 9-2-9-9-2 9-2z' fill='%23bfe3f7' stroke='%23a9bde8' stroke-width='.8' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style/estilo.css">
+  <!-- Se aplica el tema guardado antes de pintar la página, para que no parpadee -->
+  <script>
+    try {
+      var t = localStorage.getItem("aduanas-tema");
+      if (t !== "claro") document.documentElement.setAttribute("data-tema", "oscuro");
+    } catch (e) { document.documentElement.setAttribute("data-tema", "oscuro"); /* sin almacenamiento: se queda la noche */ }
+  </script>
+</head>
+<body>
+
+<!-- Íconos: se definen una sola vez y se usan con <use href="#i-nombre"> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Filtro de "trazo a mano": ondula un poco los bordes de paneles y ventanas (solo se aplica a bordes, nunca al texto) -->
+    <filter id="trazo" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="4" result="r"/>
+      <feDisplacementMap in="SourceGraphic" in2="r" scale="5"/>
+    </filter>
+    <!-- Filtro de "mancha": deforma mucho los bordes de los fondos de acuarela (nunca se aplica a texto) -->
+    <filter id="nube" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="8" result="r"/>
+      <feDisplacementMap in="SourceGraphic" in2="r" scale="26"/>
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+    <symbol id="i-brujula" viewBox="0 0 76 76"><circle cx="38" cy="38" r="31" stroke-width="1.8"/><circle cx="38" cy="38" r="25.5" stroke-width=".8" opacity=".7"/><path d="M38 17l3.2 17.8L59 38l-17.8 3.2L38 59l-3.2-17.8L17 38l17.8-3.2z" stroke-width="1.5" stroke-linejoin="round" fill="currentColor" fill-opacity=".22"/><path d="M13 58q6.3-5 12.6 0t12.6 0 12.6 0 12.6 0" stroke-width="1.3" opacity=".85"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-caja" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-buscar" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="i-editar" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-borrar" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-descargar" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-entrada" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-salida" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></symbol>
+    <symbol id="i-alerta" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
+    <symbol id="i-vacio" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1 3h6l1-3h5"/></symbol>
+    <symbol id="i-salir" viewBox="0 0 24 24"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M16 8l4 4-4 4M20 12H9"/></symbol>
+    <symbol id="i-refrescar" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-3M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.6 3M20 20v-4h-4"/></symbol>
+  </defs>
+</svg>
+
+<!-- ===== Pantalla de inicio de sesión ===== -->
+<div class="login" id="login" hidden>
+  <form class="login-caja" id="form-login" novalidate>
+    <div class="login-marca">
+      <svg class="login-logo" aria-hidden="true"><use href="#i-brujula"/></svg>
+      <h1>Gestión Aduanera</h1>
+      <p>Inicia sesión para continuar</p>
+    </div>
+    <div class="form-alerta" id="login-alerta" hidden role="alert"></div>
+    <div class="campo">
+      <label for="f-login-usuario">Usuario</label>
+      <input id="f-login-usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false">
+      <span class="error" id="e-usuario"></span>
+    </div>
+    <div class="campo">
+      <label for="f-login-clave">Contraseña</label>
+      <div class="campo-con-boton">
+        <input id="f-login-clave" name="clave" type="password" autocomplete="current-password">
+        <button type="button" class="btn" id="btn-ver-clave" aria-pressed="false">Mostrar</button>
+      </div>
+      <span class="error" id="e-clave"></span>
+    </div>
+    <button type="submit" class="btn btn-primario login-enviar" id="login-enviar">Ingresar</button>
+    <p class="login-pie">Acceso restringido a personal autorizado</p>
+  </form>
+</div>
+
+<div class="app" id="app" hidden>
+
+  <!-- ===== Menú lateral ===== -->
+  <aside class="lateral" id="lateral">
+    <div class="marca">
+      <svg class="marca-logo" aria-hidden="true"><use href="#i-brujula"/></svg>
+      <div class="marca-nombre">Gestión Aduanera<span class="marca-sub">Declaraciones y mercancías</span></div>
+    </div>
+
+    <nav class="nav" aria-label="Secciones">
+      <a href="#/panel" data-vista="panel"><svg class="ico"><use href="#i-panel"/></svg>Panel</a>
+      <a href="#/declaraciones" data-vista="declaraciones"><svg class="ico"><use href="#i-doc"/></svg>Declaraciones<span class="contador" id="cont-declaraciones">–</span></a>
+      <a href="#/mercancias" data-vista="mercancias"><svg class="ico"><use href="#i-caja"/></svg>Mercancías<span class="contador" id="cont-mercancias">–</span></a>
+      <a href="#/incidencias" data-vista="incidencias"><svg class="ico"><use href="#i-alerta"/></svg>Incidencias<span class="contador" id="cont-incidencias">–</span></a>
+    </nav>
+
+    <div class="lateral-pie">
+      <div class="conexion" id="conexion" data-estado="" role="status"><span class="punto"></span><span id="conexion-texto">Conectando…</span></div>
+      <div class="usuario">
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <div class="usuario-datos"><div class="usuario-nombre" id="usuario-nombre"></div><div class="usuario-rol" id="usuario-rol"></div></div>
+        <button type="button" class="btn-salir" id="btn-salir" title="Cerrar sesión" aria-label="Cerrar sesión"><svg class="ico"><use href="#i-salir"/></svg></button>
+      </div>
+      <button type="button" class="btn-tema" id="btn-tema"><svg class="ico"><use href="#i-luna"/></svg><span id="btn-tema-texto">Tema oscuro</span></button>
+    </div>
+  </aside>
+  <div class="cortina" id="cortina"></div>
+
+  <!-- ===== Zona principal ===== -->
+  <div class="principal">
+    <header class="barra">
+      <button type="button" class="btn btn-icono btn-menu" id="btn-menu" aria-label="Abrir menú"><svg class="ico"><use href="#i-menu"/></svg></button>
+      <div class="barra-titulo">
+        <h1 id="titulo">Panel</h1>
+        <p id="subtitulo"></p>
+      </div>
+      <div class="barra-acciones">
+        <button type="button" class="btn" id="btn-actualizar" title="Volver a cargar los datos"><svg class="ico"><use href="#i-refrescar"/></svg><span class="texto">Actualizar</span></button>
+        <button type="button" class="btn btn-primario" id="btn-nuevo"><svg class="ico"><use href="#i-plus"/></svg><span class="texto" id="btn-nuevo-texto">Nueva declaración</span></button>
+      </div>
+    </header>
+
+    <main class="contenido" id="contenido">
+
+      <!-- ----- Vista: Panel ----- -->
+      <section class="vista" id="vista-panel" hidden>
+        <div class="rejilla-panel">
+          <div class="panel">
+            <div class="panel-cab"><h2>Declaraciones por estado</h2><a class="enlace" href="#/declaraciones">Ver todas</a></div>
+            <div class="panel-cuerpo" id="panel-estados"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-cab"><h2>Valor declarado</h2></div>
+            <div class="panel-cuerpo" id="panel-valores"></div>
+          </div>
+        </div>
+        <div class="rejilla-panel">
+          <div class="panel">
+            <div class="panel-cab"><h2>Últimas declaraciones</h2><a class="enlace" href="#/declaraciones">Ver todas</a></div>
+            <div class="tabla-wrap" id="panel-recientes"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-cab"><h2>Mercancías de mayor valor</h2><a class="enlace" href="#/mercancias">Ver todas</a></div>
+            <div id="panel-top"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----- Vista: Declaraciones ----- -->
+      <section class="vista" id="vista-declaraciones" hidden>
+        <div class="panel">
+          <div class="herramientas">
+            <div class="buscador">
+              <svg class="ico"><use href="#i-buscar"/></svg>
+              <label class="solo-lectores" for="dec-buscar">Buscar declaraciones</label>
+              <input type="search" id="dec-buscar" placeholder="Buscar por número, empresa o aduana" autocomplete="off">
+            </div>
+            <label class="solo-lectores" for="dec-tipo">Tipo de operación</label>
+            <select id="dec-tipo">
+              <option value="">Todos los tipos</option>
+              <option value="IMPORTACION">Importación</option>
+              <option value="EXPORTACION">Exportación</option>
+            </select>
+            <label class="solo-lectores" for="dec-estado">Estado</label>
+            <select id="dec-estado">
+              <option value="">Todos los estados</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="EN_REVISION">En revisión</option>
+              <option value="APROBADA">Aprobada</option>
+              <option value="RECHAZADA">Rechazada</option>
+            </select>
+            <span class="espacio"></span>
+            <button type="button" class="btn" id="dec-csv"><svg class="ico"><use href="#i-descargar"/></svg>Exportar CSV</button>
+          </div>
+          <div class="tabla-wrap" id="dec-tabla"></div>
+          <div class="pie-tabla" id="dec-pie"></div>
+        </div>
+      </section>
+
+      <!-- ----- Vista: Mercancías ----- -->
+      <section class="vista" id="vista-mercancias" hidden>
+        <div class="panel">
+          <div class="herramientas">
+            <div class="buscador">
+              <svg class="ico"><use href="#i-buscar"/></svg>
+              <label class="solo-lectores" for="mer-buscar">Buscar mercancías</label>
+              <input type="search" id="mer-buscar" placeholder="Buscar por descripción o partida" autocomplete="off">
+            </div>
+            <label class="solo-lectores" for="mer-declaracion">Declaración</label>
+            <select id="mer-declaracion"><option value="">Todas las declaraciones</option></select>
+            <span class="espacio"></span>
+            <button type="button" class="btn" id="mer-csv"><svg class="ico"><use href="#i-descargar"/></svg>Exportar CSV</button>
+          </div>
+          <div class="tabla-wrap" id="mer-tabla"></div>
+          <div class="pie-tabla" id="mer-pie"></div>
+        </div>
+      </section>
+
+
+      <!-- ----- Vista: Incidencias ----- -->
+      <section class="vista" id="vista-incidencias" hidden>
+        <div class="panel">
+          <div class="herramientas">
+            <div class="buscador">
+              <svg class="ico"><use href="#i-buscar"/></svg>
+              <label class="solo-lectores" for="inc-buscar">Buscar incidencias</label>
+              <input type="search" id="inc-buscar" placeholder="Buscar por mercancía, declaración o descripción" autocomplete="off">
+            </div>
+            <label class="solo-lectores" for="inc-tipo">Tipo de incidencia</label>
+            <select id="inc-tipo">
+              <option value="">Todos los tipos</option>
+              <option value="PERDIDA">Pérdida</option>
+              <option value="EXTRAVIO">Extravío</option>
+              <option value="ROBO">Robo</option>
+              <option value="DANO">Daño</option>
+            </select>
+            <label class="solo-lectores" for="inc-estado">Estado</label>
+            <select id="inc-estado">
+              <option value="">Todos los estados</option>
+              <option value="ABIERTA">Abierta</option>
+              <option value="EN_INVESTIGACION">En investigación</option>
+              <option value="RESUELTA">Resuelta</option>
+            </select>
+            <span class="espacio"></span>
+            <button type="button" class="btn" id="inc-csv"><svg class="ico"><use href="#i-descargar"/></svg>Exportar CSV</button>
+          </div>
+          <div class="tabla-wrap" id="inc-tabla"></div>
+          <div class="pie-tabla" id="inc-pie"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== Ventana: declaración (crear / editar) ===== -->
+<dialog id="dlg-declaracion" aria-labelledby="dlg-dec-titulo">
+  <form id="form-declaracion" novalidate>
+    <div class="dialogo-cab">
+      <div><h2 id="dlg-dec-titulo">Nueva declaración</h2><p>Los campos con * son obligatorios.</p></div>
+      <button type="button" class="btn btn-icono" data-cerrar aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dialogo-cuerpo">
+      <div class="form-alerta" id="dec-alerta" hidden role="alert"></div>
+      <div class="form-grid">
+        <div class="campo">
+          <label for="f-dec-numero">Número de declaración *</label>
+          <div class="campo-con-boton">
+            <input id="f-dec-numero" name="numeroDeclaracion" class="mono" maxlength="30" placeholder="DUA-2026-00113" autocomplete="off">
+            <button type="button" class="btn" id="btn-sugerir" title="Proponer el siguiente número libre">Sugerir</button>
+          </div>
+          <span class="error" id="e-numeroDeclaracion"></span>
+        </div>
+        <div class="campo">
+          <label for="f-dec-fecha">Fecha *</label>
+          <input id="f-dec-fecha" name="fecha" type="date">
+          <span class="error" id="e-fecha"></span>
+        </div>
+        <div class="campo completo">
+          <span class="etiqueta" id="et-tipo">Tipo de operación *</span>
+          <div class="opciones-tipo" role="radiogroup" aria-labelledby="et-tipo">
+            <label class="opcion-tipo"><input type="radio" name="tipoOperacion" value="IMPORTACION" checked><span><svg class="ico"><use href="#i-entrada"/></svg>Importación</span></label>
+            <label class="opcion-tipo"><input type="radio" name="tipoOperacion" value="EXPORTACION"><span><svg class="ico"><use href="#i-salida"/></svg>Exportación</span></label>
+          </div>
+          <span class="error" id="e-tipoOperacion"></span>
+        </div>
+        <div class="campo">
+          <label for="f-dec-aduana">Aduana *</label>
+          <input id="f-dec-aduana" name="aduana" list="lista-aduanas" maxlength="80" placeholder="Aduana Marítima del Callao" autocomplete="off">
+          <datalist id="lista-aduanas"></datalist>
+          <span class="error" id="e-aduana"></span>
+        </div>
+        <div class="campo">
+          <label for="f-dec-empresa">Importador / Exportador *</label>
+          <input id="f-dec-empresa" name="importadorExportador" list="lista-empresas" maxlength="120" placeholder="Razón social" autocomplete="off">
+          <datalist id="lista-empresas"></datalist>
+          <span class="error" id="e-importadorExportador"></span>
+        </div>
+        <div class="campo completo" id="campo-estado" hidden>
+          <label for="f-dec-estado">Estado del trámite</label>
+          <select id="f-dec-estado" name="estado">
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="EN_REVISION">En revisión</option>
+            <option value="APROBADA">Aprobada</option>
+            <option value="RECHAZADA">Rechazada</option>
+          </select>
+          <span class="error" id="e-estado"></span>
+        </div>
+      </div>
+    </div>
+    <div class="dialogo-pie">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn btn-primario" id="dec-guardar">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== Ventana: mercancía (crear / editar) ===== -->
+<dialog id="dlg-mercancia" aria-labelledby="dlg-mer-titulo">
+  <form id="form-mercancia" novalidate>
+    <div class="dialogo-cab">
+      <div><h2 id="dlg-mer-titulo">Nueva mercancía</h2><p>Cada mercancía pertenece a una declaración.</p></div>
+      <button type="button" class="btn btn-icono" data-cerrar aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dialogo-cuerpo">
+      <div class="form-alerta" id="mer-alerta" hidden role="alert"></div>
+      <div class="form-grid">
+        <div class="campo completo">
+          <label for="f-mer-declaracion">Declaración *</label>
+          <select id="f-mer-declaracion" name="declaracionId"></select>
+          <span class="error" id="e-declaracionId"></span>
+        </div>
+        <div class="campo completo">
+          <label for="f-mer-descripcion">Descripción *</label>
+          <input id="f-mer-descripcion" name="descripcion" maxlength="150" placeholder="Paltas Hass frescas" autocomplete="off">
+          <span class="error" id="e-descripcion"></span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-partida">Partida arancelaria *</label>
+          <input id="f-mer-partida" name="partidaArancelaria" class="mono" placeholder="0804.40.00" autocomplete="off">
+          <span class="pista">Formato 0000.00.00 (o con 4º nivel .00)</span>
+          <span class="error" id="e-partidaArancelaria"></span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-unidad">Unidad de medida *</label>
+          <input id="f-mer-unidad" name="unidadMedida" list="lista-unidades" maxlength="30" placeholder="unidades" autocomplete="off">
+          <datalist id="lista-unidades"><option value="unidades"><option value="kilogramos"><option value="toneladas"><option value="litros"><option value="cajas"><option value="pares"><option value="docenas"></datalist>
+          <span class="error" id="e-unidadMedida"></span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-cantidad">Cantidad *</label>
+          <input id="f-mer-cantidad" name="cantidad" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+          <span class="error" id="e-cantidad"></span>
+        </div>
+        <div class="campo">
+          <label for="f-mer-valor">Valor (USD) *</label>
+          <input id="f-mer-valor" name="valor" type="number" min="0" step="any" inputmode="decimal" placeholder="0.00">
+          <span class="error" id="e-valor"></span>
+        </div>
+        <div class="campo completo">
+          <label for="f-mer-peso">Peso (kg) <span class="opcional">(opcional)</span></label>
+          <input id="f-mer-peso" name="peso" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+          <span class="error" id="e-peso"></span>
+        </div>
+      </div>
+    </div>
+    <div class="dialogo-pie">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn btn-primario" id="mer-guardar">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== Ventana: incidencia (crear / editar) ===== -->
+<dialog id="dlg-incidencia" aria-labelledby="dlg-inc-titulo">
+  <form id="form-incidencia" novalidate>
+    <div class="dialogo-cab">
+      <div><h2 id="dlg-inc-titulo">Nueva incidencia</h2><p>Pérdida, extravío, robo o daño de una mercancía.</p></div>
+      <button type="button" class="btn btn-icono" data-cerrar aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dialogo-cuerpo">
+      <div class="form-alerta" id="inc-alerta" hidden role="alert"></div>
+      <div class="form-grid">
+        <div class="campo completo">
+          <label for="f-inc-mercancia">Mercancía afectada *</label>
+          <select id="f-inc-mercancia" name="mercanciaId"></select>
+          <span class="error" id="e-mercanciaId"></span>
+        </div>
+        <div class="campo completo">
+          <span class="etiqueta" id="et-inc-tipo">Tipo de incidencia *</span>
+          <div class="opciones-tipo" role="radiogroup" aria-labelledby="et-inc-tipo">
+            <label class="opcion-tipo"><input type="radio" name="tipo" value="PERDIDA" checked><span>Pérdida</span></label>
+            <label class="opcion-tipo"><input type="radio" name="tipo" value="EXTRAVIO"><span>Extravío</span></label>
+            <label class="opcion-tipo"><input type="radio" name="tipo" value="ROBO"><span>Robo</span></label>
+            <label class="opcion-tipo"><input type="radio" name="tipo" value="DANO"><span>Daño</span></label>
+          </div>
+          <span class="error" id="e-tipo"></span>
+        </div>
+        <div class="campo">
+          <label for="f-inc-fecha">Fecha del suceso *</label>
+          <input id="f-inc-fecha" name="fecha" type="date">
+          <span class="error" id="e-fecha"></span>
+        </div>
+        <div class="campo">
+          <label for="f-inc-cantidad">Cantidad afectada <span class="opcional">(opcional)</span></label>
+          <input id="f-inc-cantidad" name="cantidadAfectada" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+          <span class="error" id="e-cantidadAfectada"></span>
+        </div>
+        <div class="campo completo">
+          <label for="f-inc-descripcion">¿Qué pasó? *</label>
+          <textarea id="f-inc-descripcion" name="descripcion" rows="3" maxlength="300" placeholder="Describe lo ocurrido, sin datos personales"></textarea>
+          <span class="pista">Máximo 300 caracteres. No escribas datos personales ni contraseñas.</span>
+          <span class="error" id="e-descripcion"></span>
+        </div>
+        <div class="campo completo" id="campo-estado-inc" hidden>
+          <label for="f-inc-estado">Estado del seguimiento</label>
+          <select id="f-inc-estado" name="estado">
+            <option value="ABIERTA">Abierta</option>
+            <option value="EN_INVESTIGACION">En investigación</option>
+            <option value="RESUELTA">Resuelta</option>
+          </select>
+          <span class="error" id="e-estado"></span>
+        </div>
+      </div>
+    </div>
+    <div class="dialogo-pie">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn btn-primario" id="inc-guardar">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== Ventana: detalle de una declaración ===== -->
+<dialog id="dlg-detalle" class="ancho" aria-labelledby="det-titulo">
+  <div class="dialogo-cab">
+    <div><h2 id="det-titulo">Declaración</h2><p id="det-sub"></p></div>
+    <button type="button" class="btn btn-icono" data-cerrar aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="dialogo-cuerpo" id="det-cuerpo"></div>
+  <div class="dialogo-pie">
+    <button type="button" class="btn" id="det-imprimir">Imprimir</button>
+    <span class="espacio"></span>
+    <button type="button" class="btn" id="det-editar"><svg class="ico"><use href="#i-editar"/></svg>Editar</button>
+    <button type="button" class="btn btn-primario" data-cerrar>Cerrar</button>
+  </div>
+</dialog>
+
+<!-- ===== Ventana: confirmar eliminación ===== -->
+<dialog id="dlg-confirmar" class="angosto" aria-labelledby="conf-titulo">
+  <div class="dialogo-cab">
+    <div><h2 id="conf-titulo">¿Eliminar?</h2><p id="conf-texto"></p></div>
+  </div>
+  <div class="dialogo-pie">
+    <button type="button" class="btn" data-cerrar>Cancelar</button>
+    <button type="button" class="btn btn-peligro" id="conf-aceptar">Eliminar</button>
+  </div>
+</dialog>
+
+<div class="avisos" id="avisos" aria-live="polite"></div>
+
+<script src="/js/javascript.js"></script>
+</body>
+</html>

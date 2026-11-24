@@ -1,0 +1,3 @@
+Estos 4 tests son de la etapa en memoria (antes de la base de datos): crean los servicios
+sin repositorio, por eso ya no compilan. Se sacaron de src/test para que Maven no falle.
+Hay que rehacerlos con repositorios simulados (Mockito). No afectan a la aplicación.

@@ -1,0 +1,25 @@
+<div class="login" id="login">
+  <form class="login-caja" [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+    <div class="login-marca">
+      <svg class="login-logo" aria-hidden="true"><use href="#i-brujula"/></svg>
+      <h1>Gestión Aduanera</h1>
+      <p>Inicia sesión para continuar</p>
+    </div>
+    @if (alerta() || sesion.mensajeLogin()) { <div class="form-alerta" role="alert">{{ alerta() || sesion.mensajeLogin() }}</div> }
+    <div class="campo">
+      <label for="f-login-usuario">Usuario</label>
+      <input id="f-login-usuario" formControlName="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus>
+      <span class="error">{{ errorUsuario() }}</span>
+    </div>
+    <div class="campo">
+      <label for="f-login-clave">Contraseña</label>
+      <div class="campo-con-boton">
+        <input #clave id="f-login-clave" formControlName="clave" [type]="verClave() ? 'text' : 'password'" autocomplete="current-password">
+        <button type="button" class="btn" [attr.aria-pressed]="verClave()" (click)="verClave.set(!verClave())">{{ verClave() ? 'Ocultar' : 'Mostrar' }}</button>
+      </div>
+      <span class="error">{{ errorClave() }}</span>
+    </div>
+    <button type="submit" class="btn btn-primario login-enviar" [disabled]="enviando()">{{ enviando() ? 'Ingresando…' : 'Ingresar' }}</button>
+    <p class="login-pie">Acceso restringido a personal autorizado</p>
+  </form>
+</div>

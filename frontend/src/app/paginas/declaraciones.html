@@ -1,0 +1,80 @@
+<section class="vista">
+  <div class="panel">
+    <div class="herramientas">
+      <div class="buscador">
+        <svg ico="buscar"></svg>
+        <label class="solo-lectores" for="dec-buscar">Buscar declaraciones</label>
+        <input #buscador type="search" id="dec-buscar" placeholder="Buscar por número, empresa o aduana" autocomplete="off"
+               [value]="q()" (input)="buscar($any($event.target).value)">
+      </div>
+      <label class="solo-lectores" for="dec-tipo">Tipo de operación</label>
+      <select id="dec-tipo" [value]="tipo()" (change)="filtrarTipo($any($event.target).value)">
+        <option value="" [selected]="tipo() === ''">Todos los tipos</option>
+        <option value="IMPORTACION" [selected]="tipo() === 'IMPORTACION'">Importación</option>
+        <option value="EXPORTACION" [selected]="tipo() === 'EXPORTACION'">Exportación</option>
+      </select>
+      <label class="solo-lectores" for="dec-estado">Estado</label>
+      <select id="dec-estado" (change)="filtrarEstado($any($event.target).value)">
+        <option value="" [selected]="estado() === ''">Todos los estados</option>
+        @for (e of estados; track e) { <option [value]="e" [selected]="estado() === e">{{ nombreEstado[e] }}</option> }
+      </select>
+      <span class="espacio"></span>
+      <button type="button" class="btn" (click)="exportar()"><svg ico="descargar"></svg>Exportar CSV</button>
+    </div>
+
+    <div class="tabla-wrap">
+      @if (!datos.cargado()) {
+        <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+      } @else if (datos.errorCarga()) {
+        <div class="vacio error-carga"><svg ico="alerta"></svg><h3>No se pudo cargar la información</h3>
+          <p>Revisa que la aplicación Spring Boot siga en ejecución e inténtalo otra vez.</p>
+          <button type="button" class="btn" (click)="datos.cargarTodo()"><svg ico="refrescar"></svg>Reintentar</button></div>
+      } @else if (datos.declaraciones().length === 0) {
+        <div class="vacio"><svg ico="vacio"></svg><h3>Aún no hay declaraciones</h3><p>Registra la primera para empezar a llevar el control de tus operaciones.</p>
+          <button type="button" class="btn btn-primario" (click)="ui.declaracion()"><svg ico="plus"></svg>Nueva declaración</button></div>
+      } @else if (lista().length === 0) {
+        <div class="vacio"><svg ico="vacio"></svg><h3>Sin resultados</h3><p>Ninguna declaración coincide con la búsqueda o los filtros.</p>
+          <button type="button" class="btn" (click)="limpiar()">Limpiar filtros</button></div>
+      } @else {
+        <table class="tabla">
+          <thead><tr>
+            <th ordenable col="numeroDeclaracion" titulo="Número" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="tipoOperacion" titulo="Tipo" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="fecha" titulo="Fecha" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="importadorExportador" titulo="Importador / Exportador" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="estado" titulo="Estado" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="num" ordenable col="nMercancias" titulo="Merc." ayuda="Cantidad de mercancías" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="num" ordenable col="valor" titulo="Valor" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="acciones-col sin-orden"><span class="solo-lectores">Acciones</span></th>
+          </tr></thead>
+          <tbody>
+            @for (d of visibles(); track d.id) {
+              <tr>
+                <td><button type="button" class="enlace-numero" (click)="ui.detalle(d.id)">{{ d.numeroDeclaracion }}</button></td>
+                <td><span [chip-tipo]="d.tipoOperacion"></span></td>
+                <td class="nowrap">{{ d.fecha | fechaCorta }}</td>
+                <td class="corto" [attr.title]="d.importadorExportador + ' · ' + d.aduana">{{ d.importadorExportador }}<span class="segunda-linea">{{ d.aduana }}</span></td>
+                <td>
+                  <span selector-estado [valor]="d.estado" [opciones]="estados" [nombres]="nombreEstado" [etiqueta]="'Estado de ' + d.numeroDeclaracion"
+                        (cambio)="datos.cambiarEstadoDeclaracion(d.id, $event)"></span>
+                </td>
+                <td class="num">{{ d.nMercancias }}</td>
+                <td class="num">@if (d.nMercancias) { {{ d.valor | dinero }} } @else { <span class="apagado">—</span> }</td>
+                <td class="acciones-col">
+                  <div class="acciones">
+                    <button type="button" class="btn btn-icono" title="Ver detalle" [attr.aria-label]="'Ver detalle de ' + d.numeroDeclaracion" (click)="ui.detalle(d.id)"><svg ico="ojo"></svg></button>
+                    <button type="button" class="btn btn-icono" title="Editar" [attr.aria-label]="'Editar ' + d.numeroDeclaracion" (click)="ui.declaracion(d)"><svg ico="editar"></svg></button>
+                    @if (sesion.esAdmin()) {
+                      <button type="button" class="btn btn-icono peligro" title="Eliminar" [attr.aria-label]="'Eliminar ' + d.numeroDeclaracion" (click)="acciones.eliminarDeclaracion(d)"><svg ico="borrar"></svg></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+    <div pie [total]="lista().length" [pagina]="paginaReal()" (cambiar)="pagina.set($event)"></div>
+  </div>
+</section>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Gestión Aduanera</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='17' fill='%230e1428'/%3E%3Ccircle cx='18' cy='18' r='13' fill='none' stroke='%237fb6dd' stroke-width='1.5'/%3E%3Cpath d='M18 7l2 9 9 2-9 2-2 9-2-9-9-2 9-2z' fill='%23bfe3f7' stroke='%23a9bde8' stroke-width='.8' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <!-- Se aplica el tema guardado antes de pintar la página, para que no parpadee -->
+  <script>
+    try {
+      var t = localStorage.getItem("aduanas-tema");
+      if (t !== "claro") document.documentElement.setAttribute("data-tema", "oscuro");
+    } catch (e) { document.documentElement.setAttribute("data-tema", "oscuro"); /* sin almacenamiento: se queda la noche */ }
+  </script>
+</head>
+<body>
+
+<!-- Íconos: se definen una sola vez y se usan con <use href="#i-nombre"> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Filtro de "trazo a mano": ondula un poco los bordes de paneles y ventanas (solo se aplica a bordes, nunca al texto) -->
+    <filter id="trazo" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="4" result="r"/>
+      <feDisplacementMap in="SourceGraphic" in2="r" scale="5"/>
+    </filter>
+    <!-- Filtro de "mancha": deforma mucho los bordes de los fondos de acuarela (nunca se aplica a texto) -->
+    <filter id="nube" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="8" result="r"/>
+      <feDisplacementMap in="SourceGraphic" in2="r" scale="26"/>
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+    <symbol id="i-brujula" viewBox="0 0 76 76"><circle cx="38" cy="38" r="31" stroke-width="1.8"/><circle cx="38" cy="38" r="25.5" stroke-width=".8" opacity=".7"/><path d="M38 17l3.2 17.8L59 38l-17.8 3.2L38 59l-3.2-17.8L17 38l17.8-3.2z" stroke-width="1.5" stroke-linejoin="round" fill="currentColor" fill-opacity=".22"/><path d="M13 58q6.3-5 12.6 0t12.6 0 12.6 0 12.6 0" stroke-width="1.3" opacity=".85"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-caja" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-buscar" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="i-editar" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-borrar" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-descargar" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-entrada" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-salida" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></symbol>
+    <symbol id="i-alerta" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
+    <symbol id="i-vacio" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1 3h6l1-3h5"/></symbol>
+    <symbol id="i-salir" viewBox="0 0 24 24"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M16 8l4 4-4 4M20 12H9"/></symbol>
+    <symbol id="i-refrescar" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-3M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.6 3M20 20v-4h-4"/></symbol>
+  </defs>
+</svg>
+
+<app-root></app-root>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<section class="vista">
+  <div class="panel">
+    <div class="herramientas">
+      <div class="buscador">
+        <svg ico="buscar"></svg>
+        <label class="solo-lectores" for="inc-buscar">Buscar incidencias</label>
+        <input #buscador type="search" id="inc-buscar" placeholder="Buscar por mercancía, declaración o descripción" autocomplete="off"
+               [value]="q()" (input)="buscar($any($event.target).value)">
+      </div>
+      <label class="solo-lectores" for="inc-tipo">Tipo de incidencia</label>
+      <select id="inc-tipo" (change)="filtrarTipo($any($event.target).value)">
+        <option value="" [selected]="tipo() === ''">Todos los tipos</option>
+        @for (t of tipos; track t) { <option [value]="t" [selected]="tipo() === t">{{ nombreTipo[t] }}</option> }
+      </select>
+      <label class="solo-lectores" for="inc-estado">Estado</label>
+      <select id="inc-estado" (change)="filtrarEstado($any($event.target).value)">
+        <option value="" [selected]="estado() === ''">Todos los estados</option>
+        @for (e of estados; track e) { <option [value]="e" [selected]="estado() === e">{{ nombreEstado[e] }}</option> }
+      </select>
+      <span class="espacio"></span>
+      <button type="button" class="btn" (click)="exportar()"><svg ico="descargar"></svg>Exportar CSV</button>
+    </div>
+
+    <div class="tabla-wrap">
+      @if (!datos.cargado()) {
+        <div style="display:grid;gap:16px;padding:20px" aria-busy="true">@for (f of filas; track f) { <span class="sk"></span> }</div>
+      } @else if (datos.errorCarga()) {
+        <div class="vacio error-carga"><svg ico="alerta"></svg><h3>No se pudo cargar la información</h3>
+          <p>Revisa que la aplicación Spring Boot siga en ejecución e inténtalo otra vez.</p>
+          <button type="button" class="btn" (click)="datos.cargarTodo()"><svg ico="refrescar"></svg>Reintentar</button></div>
+      } @else if (datos.incidencias().length === 0) {
+        <div class="vacio"><svg ico="vacio"></svg><h3>Sin incidencias</h3><p>Aquí se registran las pérdidas, extravíos, robos y daños de las mercancías.</p>
+          <button type="button" class="btn btn-primario" (click)="ui.incidencia()"><svg ico="plus"></svg>Nueva incidencia</button></div>
+      } @else if (lista().length === 0) {
+        <div class="vacio"><svg ico="vacio"></svg><h3>Sin resultados</h3><p>Ninguna incidencia coincide con la búsqueda o los filtros.</p>
+          <button type="button" class="btn" (click)="limpiar()">Limpiar filtros</button></div>
+      } @else {
+        <table class="tabla">
+          <thead><tr>
+            <th ordenable col="fecha" titulo="Fecha" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="tipo" titulo="Tipo" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="mercancia" titulo="Mercancía" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="numeroDeclaracion" titulo="Declaración" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="num" ordenable col="cantidadAfectada" titulo="Afectado" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="estado" titulo="Estado" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th ordenable col="registradaPor" titulo="Registró" ayuda="Usuario que la registró (lo pone el servidor)" [orden]="orden()" (ordenar)="cambiarOrden($event)"></th>
+            <th class="acciones-col sin-orden"><span class="solo-lectores">Acciones</span></th>
+          </tr></thead>
+          <tbody>
+            @for (i of visibles(); track i.id) {
+              <tr>
+                <td class="nowrap">{{ i.fecha | fechaCorta }}</td>
+                <td><span class="tipo-inc" [attr.data-tipo]="i.tipo">{{ nombreTipo[i.tipo] || i.tipo }}</span></td>
+                <td class="corto" [attr.title]="i.mercancia + ' · ' + i.descripcion">{{ i.mercancia }}<span class="segunda-linea">{{ i.descripcion }}</span></td>
+                <td><button type="button" class="enlace-numero" (click)="ui.detalle(i.declaracionId)">{{ i.numeroDeclaracion }}</button></td>
+                <td class="num">@if (i.cantidadAfectada) { {{ i.cantidadAfectada | numero }} @if (unidad(i)) { <span class="apagado">{{ unidad(i) }}</span> } } @else { <span class="apagado">—</span> }</td>
+                <td>
+                  <span selector-estado [valor]="i.estado" [opciones]="estados" [nombres]="nombreEstado" [etiqueta]="'Estado de la incidencia ' + i.id"
+                        [bloqueado]="cerradaParaMi(i)" [titulo]="cerradaParaMi(i) ? 'Resuelta: solo un administrador puede reabrirla' : ''"
+                        (cambio)="datos.cambiarEstadoIncidencia(i.id, $event)"></span>
+                </td>
+                <td>
+                  {{ i.registradaPor }}<span class="segunda-linea">{{ i.fechaRegistro | fechaHora }}</span>
+                  @if (i.modificadaPor) { <span class="segunda-linea">Modificada por {{ i.modificadaPor }} · {{ i.fechaModificacion | fechaHora }}</span> }
+                </td>
+                <td class="acciones-col">
+                  <div class="acciones">
+                    <button type="button" class="btn btn-icono" [attr.aria-label]="'Editar la incidencia ' + i.id" [disabled]="i.estado === 'RESUELTA'"
+                            [attr.title]="i.estado === 'RESUELTA' ? 'Resuelta: reábrela (solo administrador) para editarla' : 'Editar'" (click)="ui.incidencia(i)"><svg ico="editar"></svg></button>
+                    @if (sesion.esAdmin()) {
+                      <button type="button" class="btn btn-icono peligro" title="Eliminar" [attr.aria-label]="'Eliminar la incidencia ' + i.id" (click)="acciones.eliminarIncidencia(i)"><svg ico="borrar"></svg></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+    <div pie [total]="lista().length" [pagina]="paginaReal()" (cambiar)="pagina.set($event)"></div>
+  </div>
+</section>

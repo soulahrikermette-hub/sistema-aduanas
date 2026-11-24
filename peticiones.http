@@ -1,0 +1,216 @@
+### =====================================================================
+### Peticiones de prueba (extensión REST Client). Pulsa "Send Request" sobre cada una.
+### Los datos viven en la base de datos (Supabase), así que los GET devuelven lo que haya guardado ahí.
+### =====================================================================
+
+### -------------------- SESIÓN --------------------
+### IMPORTANTE: la API ahora exige iniciar sesión. Ejecuta primero esta petición; REST Client
+### guarda la cookie SESION y la envía sola en las demás. La respuesta también trae un "token" JWT
+### (úsalo como "Authorization: Bearer <token>" en Swagger o Postman: http://localhost:8080/swagger-ui.html;
+### la colección de Postman está en Aduanas.postman_collection.json). Cuentas: admin / Admin2026*  y  funcionario / Func2026*
+### (cámbialas en application.properties). El funcionario no puede hacer DELETE (devuelve 403).
+
+### Iniciar sesión como administrador
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "usuario": "admin", "clave": "Admin2026*" }
+
+### Iniciar sesión como funcionario (no puede eliminar)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "usuario": "funcionario", "clave": "Func2026*" }
+
+### Quién tiene la sesión abierta
+GET http://localhost:8080/api/auth/yo
+
+### Cerrar sesión (204)
+POST http://localhost:8080/api/auth/logout
+
+### 401: contraseña incorrecta (al 5.º intento fallido seguido se bloquea 1 minuto: 429)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "usuario": "admin", "clave": "incorrecta" }
+
+### -------------------- RESUMEN --------------------
+
+### Resumen para el panel (totales, valores por tipo, declaraciones por estado)
+GET http://localhost:8080/api/estadisticas
+
+### -------------------- DECLARACIONES --------------------
+
+### Listar todas
+GET http://localhost:8080/api/declaraciones
+
+### Ver una (id 1)
+GET http://localhost:8080/api/declaraciones/1
+
+### Mercancías de una declaración
+GET http://localhost:8080/api/declaraciones/1/mercancias
+
+### Registrar (devuelve 201; el estado inicial es PENDIENTE)
+POST http://localhost:8080/api/declaraciones
+Content-Type: application/json
+
+{
+  "numeroDeclaracion": "DUA-2026-00200",
+  "tipoOperacion": "IMPORTACION",
+  "fecha": "2026-10-06",
+  "aduana": "Aduana Marítima del Callao",
+  "importadorExportador": "Comercial Andina S.A.C."
+}
+
+### Modificar completa (PUT). Si no envías "estado", se conserva el que tenía
+PUT http://localhost:8080/api/declaraciones/1
+Content-Type: application/json
+
+{
+  "numeroDeclaracion": "DUA-2026-00101",
+  "tipoOperacion": "IMPORTACION",
+  "fecha": "2026-08-18",
+  "aduana": "Aduana Marítima del Callao",
+  "importadorExportador": "Comercial Andina S.A.C."
+}
+
+### Cambiar solo el estado (PATCH): PENDIENTE, EN_REVISION, APROBADA o RECHAZADA
+PATCH http://localhost:8080/api/declaraciones/1/estado
+Content-Type: application/json
+
+{ "estado": "EN_REVISION" }
+
+### Eliminar (204). También elimina las mercancías de esa declaración
+DELETE http://localhost:8080/api/declaraciones/12
+
+### -------------------- MERCANCÍAS --------------------
+
+### Listar todas
+GET http://localhost:8080/api/mercancias
+
+### Listar las de una declaración
+GET http://localhost:8080/api/mercancias?declaracionId=1
+
+### Registrar (declaracionId es obligatorio y debe existir)
+POST http://localhost:8080/api/mercancias
+Content-Type: application/json
+
+{
+  "declaracionId": 1,
+  "descripcion": "Baterías para automóvil",
+  "partidaArancelaria": "8507.10.00",
+  "cantidad": 60,
+  "unidadMedida": "unidades",
+  "valor": 5400,
+  "peso": 900
+}
+
+### Modificar (PUT)
+PUT http://localhost:8080/api/mercancias/1
+Content-Type: application/json
+
+{
+  "declaracionId": 1,
+  "descripcion": "Repuestos automotrices (frenos y pastillas)",
+  "partidaArancelaria": "8708.30.00",
+  "cantidad": 130,
+  "unidadMedida": "unidades",
+  "valor": 4600,
+  "peso": 410
+}
+
+### Eliminar (204)
+DELETE http://localhost:8080/api/mercancias/1
+
+### -------------------- ERRORES (para comprobar las validaciones) --------------------
+
+### 400: campos vacíos o con formato incorrecto (la respuesta lista cada campo con su mensaje)
+POST http://localhost:8080/api/declaraciones
+Content-Type: application/json
+
+{ "numeroDeclaracion": "", "tipoOperacion": "OTRO", "fecha": "06/10/2026", "aduana": "", "importadorExportador": "" }
+
+### 409: número de declaración repetido
+POST http://localhost:8080/api/declaraciones
+Content-Type: application/json
+
+{ "numeroDeclaracion": "DUA-2026-00101", "tipoOperacion": "IMPORTACION", "fecha": "2026-10-06", "aduana": "Aduana de Paita", "importadorExportador": "Prueba S.A." }
+
+### 400: mercancía con una declaración que no existe
+POST http://localhost:8080/api/mercancias
+Content-Type: application/json
+
+{ "declaracionId": 9999, "descripcion": "Prueba", "partidaArancelaria": "0804.40.00", "cantidad": 1, "unidadMedida": "unidades", "valor": 10 }
+
+### 400: partida arancelaria mal escrita
+POST http://localhost:8080/api/mercancias
+Content-Type: application/json
+
+{ "declaracionId": 1, "descripcion": "Prueba", "partidaArancelaria": "0804", "cantidad": 1, "unidadMedida": "unidades", "valor": 10 }
+
+### 404: declaración inexistente
+GET http://localhost:8080/api/declaraciones/9999
+
+
+### -------------------- INCIDENCIAS (pérdida, extravío, robo, daño) --------------------
+### Cambia mercanciaId por el ID de una mercancía que exista (míralo con GET /api/mercancias).
+### La declaración y el usuario que registra los pone el servidor: no se envían.
+
+### Listar todas las incidencias
+GET http://localhost:8080/api/incidencias
+
+### Filtrar: solo robos que siguen abiertos
+GET http://localhost:8080/api/incidencias?tipo=ROBO&estado=ABIERTA
+
+### Registrar una incidencia (201). Tipos: PERDIDA, EXTRAVIO, ROBO, DANO
+POST http://localhost:8080/api/incidencias
+Content-Type: application/json
+
+{ "mercanciaId": 1, "tipo": "ROBO", "fecha": "2026-11-03", "descripcion": "Precinto roto y faltan 3 cajas", "cantidadAfectada": 3 }
+
+### Cambiar solo el estado de la incidencia 1: ABIERTA, EN_INVESTIGACION o RESUELTA
+PATCH http://localhost:8080/api/incidencias/1/estado
+Content-Type: application/json
+
+{ "estado": "EN_INVESTIGACION" }
+
+### Eliminar la incidencia 1 (solo admin; el funcionario recibe 403)
+DELETE http://localhost:8080/api/incidencias/1
+
+### 400: tipo inexistente y descripción vacía
+POST http://localhost:8080/api/incidencias
+Content-Type: application/json
+
+{ "mercanciaId": 1, "tipo": "INCENDIO", "fecha": "2026-11-03", "descripcion": "" }
+
+### 400: fecha futura
+POST http://localhost:8080/api/incidencias
+Content-Type: application/json
+
+{ "mercanciaId": 1, "tipo": "DANO", "fecha": "2030-01-01", "descripcion": "Prueba" }
+
+### 400: mercancía inexistente
+POST http://localhost:8080/api/incidencias
+Content-Type: application/json
+
+{ "mercanciaId": 9999, "tipo": "PERDIDA", "fecha": "2026-11-03", "descripcion": "Prueba" }
+
+### --- Bloqueo de incidencias resueltas (capas 1 y 2) ---
+
+### Marcar como resuelta (cualquier usuario autenticado)
+PATCH http://localhost:8080/api/incidencias/1/estado
+Content-Type: application/json
+
+{ "estado": "RESUELTA" }
+
+### Editar una resuelta -> 409 (hay que reabrirla primero)
+PUT http://localhost:8080/api/incidencias/1
+Content-Type: application/json
+
+{ "mercanciaId": 1, "tipo": "ROBO", "fecha": "2026-11-01", "descripcion": "Intento de edicion" }
+
+### Reabrir siendo FUNCIONARIO -> 409; siendo ADMIN -> 200 y queda "modificadaPor"
+PATCH http://localhost:8080/api/incidencias/1/estado
+Content-Type: application/json
+
+{ "estado": "ABIERTA" }

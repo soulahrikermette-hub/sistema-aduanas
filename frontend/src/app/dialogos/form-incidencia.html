@@ -1,0 +1,62 @@
+<dialog #dlg id="dlg-incidencia" aria-labelledby="dlg-inc-titulo">
+  <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="dialogo-cab">
+      <div><h2 id="dlg-inc-titulo">{{ editando() ? 'Editar incidencia' : 'Nueva incidencia' }}</h2><p>Pérdida, extravío, robo o daño de una mercancía.</p></div>
+      <button type="button" class="btn btn-icono" aria-label="Cerrar" (click)="cerrar()"><svg ico="x"></svg></button>
+    </div>
+    <div class="dialogo-cuerpo">
+      @if (alerta()) { <div class="form-alerta" role="alert">{{ alerta() }}</div> }
+      <div class="form-grid">
+        <div class="campo completo">
+          <label for="f-inc-mercancia">Mercancía afectada *</label>
+          <select id="f-inc-mercancia" formControlName="mercanciaId" [attr.aria-invalid]="err('mercanciaId') ? 'true' : null">
+            <option value="">Elige una mercancía…</option>
+            @for (m of opcionesMercancia(); track m.id) { <option [value]="m.id">{{ m.etiqueta }}</option> }
+          </select>
+          <span class="error">{{ err('mercanciaId') }}</span>
+        </div>
+        <div class="campo completo">
+          <span class="etiqueta" id="et-inc-tipo">Tipo de incidencia *</span>
+          <div class="opciones-tipo" role="radiogroup" aria-labelledby="et-inc-tipo">
+            <label class="opcion-tipo"><input type="radio" formControlName="tipo" value="PERDIDA"><span>Pérdida</span></label>
+            <label class="opcion-tipo"><input type="radio" formControlName="tipo" value="EXTRAVIO"><span>Extravío</span></label>
+            <label class="opcion-tipo"><input type="radio" formControlName="tipo" value="ROBO"><span>Robo</span></label>
+            <label class="opcion-tipo"><input type="radio" formControlName="tipo" value="DANO"><span>Daño</span></label>
+          </div>
+          <span class="error">{{ err('tipo') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-inc-fecha">Fecha del suceso *</label>
+          <input id="f-inc-fecha" formControlName="fecha" type="date" [attr.aria-invalid]="err('fecha') ? 'true' : null">
+          <span class="error">{{ err('fecha') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-inc-cantidad">Cantidad afectada <span class="opcional">(opcional)</span></label>
+          <input id="f-inc-cantidad" formControlName="cantidadAfectada" type="number" min="0" step="any" inputmode="decimal" placeholder="0"
+                 [attr.aria-invalid]="err('cantidadAfectada') ? 'true' : null">
+          <span class="error">{{ err('cantidadAfectada') }}</span>
+        </div>
+        <div class="campo completo">
+          <label for="f-inc-descripcion">¿Qué pasó? *</label>
+          <textarea id="f-inc-descripcion" formControlName="descripcion" rows="3" maxlength="300" placeholder="Describe lo ocurrido, sin datos personales"
+                    [attr.aria-invalid]="err('descripcion') ? 'true' : null"></textarea>
+          <span class="pista">Máximo 300 caracteres. No escribas datos personales ni contraseñas.</span>
+          <span class="error">{{ err('descripcion') }}</span>
+        </div>
+        @if (editando()) {
+          <div class="campo completo">
+            <label for="f-inc-estado">Estado del seguimiento</label>
+            <select id="f-inc-estado" formControlName="estado">
+              @for (e of estados; track e) { <option [value]="e">{{ nombreEstado[e] }}</option> }
+            </select>
+            <span class="error">{{ err('estado') }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="dialogo-pie">
+      <button type="button" class="btn" (click)="cerrar()">Cancelar</button>
+      <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+</dialog>

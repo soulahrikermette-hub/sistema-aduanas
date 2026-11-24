@@ -1,0 +1,13 @@
+v6 - Front end en Angular + perfil local
+========================================
+1. El front ahora es Angular (carpeta frontend/). Ya está compilado en src/main/resources/static,
+   no hace falta instalar Node para ejecutarlo. Ver frontend/README.md.
+2. Perfil "local" con base H2 en memoria, para probar sin Supabase:
+      mvn spring-boot:run -Dspring-boot.run.profiles=local
+   Se agregaron la dependencia H2 en pom.xml y src/main/resources/application-local.properties.
+3. El front anterior quedó en frontend-clasico/ por si hiciera falta volver a él
+   (para usarlo, copiar su contenido a src/main/resources/static).
+4. Incluye las capas anti-falsificación de incidencias (rastro de modificación y bloqueo al resolverse)
+   y IncidenciaServiceTest.
+IMPORTANTE: el backend Java no se pudo compilar en el entorno donde se preparó; si al correr
+mvn spring-boot:run o mvn test sale algún error, pegarlo para corregirlo.

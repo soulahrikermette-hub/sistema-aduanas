@@ -1,0 +1,62 @@
+<dialog #dlg id="dlg-declaracion" aria-labelledby="dlg-dec-titulo">
+  <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="dialogo-cab">
+      <div><h2 id="dlg-dec-titulo">{{ editando() ? 'Editar declaración' : 'Nueva declaración' }}</h2><p>Los campos con * son obligatorios.</p></div>
+      <button type="button" class="btn btn-icono" aria-label="Cerrar" (click)="cerrar()"><svg ico="x"></svg></button>
+    </div>
+    <div class="dialogo-cuerpo">
+      @if (alerta()) { <div class="form-alerta" role="alert">{{ alerta() }}</div> }
+      <div class="form-grid">
+        <div class="campo">
+          <label for="f-dec-numero">Número de declaración *</label>
+          <div class="campo-con-boton">
+            <input id="f-dec-numero" formControlName="numeroDeclaracion" class="mono" maxlength="30" placeholder="DUA-2026-00113" autocomplete="off"
+                   [attr.aria-invalid]="err('numeroDeclaracion') ? 'true' : null">
+            @if (!editando()) { <button type="button" class="btn" title="Proponer el siguiente número libre" (click)="sugerir()">Sugerir</button> }
+          </div>
+          <span class="error">{{ err('numeroDeclaracion') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-dec-fecha">Fecha *</label>
+          <input id="f-dec-fecha" formControlName="fecha" type="date" [attr.aria-invalid]="err('fecha') ? 'true' : null">
+          <span class="error">{{ err('fecha') }}</span>
+        </div>
+        <div class="campo completo">
+          <span class="etiqueta" id="et-tipo">Tipo de operación *</span>
+          <div class="opciones-tipo" role="radiogroup" aria-labelledby="et-tipo">
+            <label class="opcion-tipo"><input type="radio" formControlName="tipoOperacion" value="IMPORTACION"><span><svg ico="entrada"></svg>Importación</span></label>
+            <label class="opcion-tipo"><input type="radio" formControlName="tipoOperacion" value="EXPORTACION"><span><svg ico="salida"></svg>Exportación</span></label>
+          </div>
+          <span class="error">{{ err('tipoOperacion') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-dec-aduana">Aduana *</label>
+          <input id="f-dec-aduana" formControlName="aduana" list="lista-aduanas" maxlength="80" placeholder="Aduana Marítima del Callao" autocomplete="off"
+                 [attr.aria-invalid]="err('aduana') ? 'true' : null">
+          <datalist id="lista-aduanas">@for (a of aduanas(); track a) { <option [value]="a"></option> }</datalist>
+          <span class="error">{{ err('aduana') }}</span>
+        </div>
+        <div class="campo">
+          <label for="f-dec-empresa">Importador / Exportador *</label>
+          <input id="f-dec-empresa" formControlName="importadorExportador" list="lista-empresas" maxlength="120" placeholder="Razón social" autocomplete="off"
+                 [attr.aria-invalid]="err('importadorExportador') ? 'true' : null">
+          <datalist id="lista-empresas">@for (e of empresas(); track e) { <option [value]="e"></option> }</datalist>
+          <span class="error">{{ err('importadorExportador') }}</span>
+        </div>
+        @if (editando()) {
+          <div class="campo completo">
+            <label for="f-dec-estado">Estado del trámite</label>
+            <select id="f-dec-estado" formControlName="estado">
+              @for (e of estados; track e) { <option [value]="e">{{ nombreEstado[e] }}</option> }
+            </select>
+            <span class="error">{{ err('estado') }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="dialogo-pie">
+      <button type="button" class="btn" (click)="cerrar()">Cancelar</button>
+      <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+</dialog>
